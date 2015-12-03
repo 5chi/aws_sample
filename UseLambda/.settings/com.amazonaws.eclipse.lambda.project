@@ -1,0 +1,5 @@
+#Lambda Function Project Metadata
+#Thu Dec 03 19:13:06 JST 2015
+lastDeploymentFunctionName=MyFunction
+lastDeploymentBucketName=kamigochitest
+lastDeploymentEndpoint=https\://lambda.ap-northeast-1.amazonaws.com/
