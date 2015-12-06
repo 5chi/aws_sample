@@ -2,7 +2,6 @@ package sample;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Date;
 
@@ -35,34 +34,27 @@ public class S3PutDynamoWriteDemo implements RequestHandler<S3Event, Object> {
 
     	S3Object s3object = client.getObject(new GetObjectRequest(bucketName, keyName));
     	String data = "";
-    	try {
-    		data = readData(s3object.getObjectContent());
-    		context.getLogger().log(data);
-    	}catch(IOException e) {
-    		System.err.println(e.getMessage());
-    		return null;
-    	}
+		data = readData(s3object);
+    	context.getLogger().log(data);
 
     	//testテーブル、primaryは"data_id"として作成済み。
         DynamoDB db = new DynamoDB(new AmazonDynamoDBClient().withRegion(Regions.AP_NORTHEAST_1));
         Table table = db.getTable("test");
 
-        Item item = new Item().withPrimaryKey("data_id", new Date().getTime())
-        		      .withJSON("document", data);
+        Item item = new Item().withPrimaryKey("data_id", new Date().getTime()).withString("document", data);
         table.putItem(item);
 
         return null;
 
     }
 
-    private String readData(InputStream in) throws IOException {
-    	//ここjava8のStreamingAPIつかえる?
-    	String readData = "";
-    	String line = null;
-    	BufferedReader br = new BufferedReader(new InputStreamReader(in));
-    	while((line = br.readLine()) != null) {
-    		readData += line;
+    private String readData(S3Object object) {
+    	StringBuilder readData = new StringBuilder();
+    	try (BufferedReader br = new BufferedReader(new InputStreamReader(object.getObjectContent()))) {
+    		br.lines().forEach(line -> {readData.append(line);});
+    	}catch(IOException e) {
+    		System.err.println(e.getMessage());
     	}
-    	return readData;
+    	return readData.toString();
     }
 }
